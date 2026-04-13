@@ -125,99 +125,127 @@ function drawMatrix(data) {
   ctx.textAlign = 'left';
   ctx.fillText('重大性矩陣圖', CFG.PAD_L, CFG.PAD_T - 18);
 
-  // ── Detect overlapping points ──────────────────────────────────────────────
-  const groups = {};
-  data.forEach(d => {
-    const key = `${d.prob.toFixed(4)},${d.impact.toFixed(4)}`;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(d.num);
-  });
-  const overlapSet = new Set();
-  const overlapGroups = [];
-  Object.values(groups).forEach(nums => {
-    if (nums.length > 1) {
-      nums.forEach(n => overlapSet.add(n));
-      overlapGroups.push(nums);
-    }
-  });
-
-  // Pre-compute label positions for overlapping points
-  const overlapOffsets = {};
-  overlapGroups.forEach(nums => {
-    const d0 = data.find(d => d.num === nums[0]);
-    const [px, py] = dataToCanvas(d0.prob, d0.impact);
-    const dirs = [
-      [-55, -45], [55, 45], [-50, 50], [50, -50],
-      [0, -60], [0, 60], [-60, 0], [60, 0],
-    ];
-    nums.forEach((n, i) => {
-      const [dx, dy] = dirs[i % dirs.length];
-      overlapOffsets[n] = [px + dx, py + dy];
-    });
-  });
-
-  // ── Draw points & labels ───────────────────────────────────────────────────
+  // ── Phase 1: draw dots ────────────────────────────────────────────────────
   data.forEach(d => {
     const [px, py] = dataToCanvas(d.prob, d.impact);
     const col = COLOR[d.cat];
-
-    // Draw marker
     ctx.save();
     ctx.fillStyle = col;
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
-
     if (d.cat === 'G') {
       ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     } else if (d.cat === 'E') {
-      // Diamond
       ctx.beginPath();
       ctx.moveTo(px, py - 11); ctx.lineTo(px + 11, py); ctx.lineTo(px, py + 11); ctx.lineTo(px - 11, py);
       ctx.closePath(); ctx.fill(); ctx.stroke();
     } else {
-      // Triangle
       ctx.beginPath();
       ctx.moveTo(px, py - 12); ctx.lineTo(px + 11, py + 8); ctx.lineTo(px - 11, py + 8);
       ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     ctx.restore();
+  });
 
-    // Label position
-    const isOverlap = overlapSet.has(d.num);
-    let lx, ly;
+  // ── Phase 2: measure badge sizes & set initial positions ─────────────────
+  // Labels sharing the same anchor are fanned out so repulsion has a non-zero
+  // direction to work with from the very first iteration.
+  const INIT_DIRS = [
+    [ 10, -10], [-10, -10], [ 10,  10], [-10,  10],
+    [  0, -14], [ 14,   0], [  0,  14], [-14,   0],
+  ];
+  const anchorCount = {};
+  ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
+  const labels = data.map(d => {
+    const [ax, ay] = dataToCanvas(d.prob, d.impact);
+    const key = `${ax.toFixed(1)},${ay.toFixed(1)}`;
+    const idx = anchorCount[key] = (anchorCount[key] ?? 0);
+    anchorCount[key]++;
+    const [odx, ody] = INIT_DIRS[idx % INIT_DIRS.length];
+    const w = ctx.measureText(String(d.num)).width + 12, h = 22;
+    return { num: d.num, cat: d.cat, ax, ay, x: ax + odx, y: ay + ody - h, w, h };
+  });
 
-    if (isOverlap) {
-      [lx, ly] = overlapOffsets[d.num];
-      // Draw leader line
+  // ── Phase 3: force-directed label placement ───────────────────────────────
+  const ITERS       = 300;
+  const SPRING_K    = 0.03;
+  const SPRING_REST = 18;
+  const DOT_RADIUS  = 14;
+
+  for (let iter = 0; iter < ITERS; iter++) {
+    // Label–label repulsion
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = i + 1; j < labels.length; j++) {
+        const a = labels[i], b = labels[j];
+        const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x) + 3;
+        const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y) + 3;
+        if (ox > 0 && oy > 0) {
+          let dx = (a.x + a.w / 2) - (b.x + b.w / 2);
+          let dy = (a.y + a.h / 2) - (b.y + b.h / 2);
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          dx /= dist; dy /= dist;
+          const f = Math.min(ox, oy) * 0.6;
+          a.x += dx * f; a.y += dy * f;
+          b.x -= dx * f; b.y -= dy * f;
+        }
+      }
+    }
+
+    // Label–dot repulsion
+    for (const l of labels) {
+      for (const d of data) {
+        const [dpx, dpy] = dataToCanvas(d.prob, d.impact);
+        let dx = (l.x + l.w / 2) - dpx, dy = (l.y + l.h / 2) - dpy;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const minDist = DOT_RADIUS + Math.max(l.w, l.h) / 2;
+        if (dist < minDist) {
+          dx /= dist; dy /= dist;
+          const f = (minDist - dist) * 0.5;
+          l.x += dx * f; l.y += dy * f;
+        }
+      }
+    }
+
+    // Spring back toward anchor
+    for (const l of labels) {
+      let dx = (l.x + l.w / 2) - l.ax, dy = (l.y + l.h / 2) - l.ay;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      if (dist > SPRING_REST) {
+        const pull = SPRING_K * (dist - SPRING_REST);
+        l.x -= (dx / dist) * pull; l.y -= (dy / dist) * pull;
+      }
+    }
+
+    // Clamp to plot area
+    for (const l of labels) {
+      l.x = Math.max(CFG.PAD_L + 2, Math.min(l.x, CFG.PAD_L + plotW - l.w - 2));
+      l.y = Math.max(CFG.PAD_T + 2, Math.min(l.y, CFG.PAD_T + plotH - l.h - 2));
+    }
+  }
+
+  // ── Phase 4: draw leader lines & badges ──────────────────────────────────
+  labels.forEach(l => {
+    const lcx = l.x + l.w / 2, lcy = l.y + l.h / 2;
+    const dist = Math.sqrt((lcx - l.ax) ** 2 + (lcy - l.ay) ** 2);
+    if (dist > SPRING_REST) {
       ctx.save();
       ctx.strokeStyle = '#AAAAAA';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([4, 3]);
-      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(lx, ly); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(l.ax, l.ay); ctx.lineTo(lcx, lcy); ctx.stroke();
       ctx.restore();
-    } else {
-      lx = px + 8;
-      ly = py - 8;
     }
-
-    // Number badge
-    const label = String(d.num);
-    ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
-    const tw = ctx.measureText(label).width;
-    const bw = tw + 12, bh = 22;
-    const bx = lx - (isOverlap ? bw / 2 : 0);
-    const by = ly - (isOverlap ? bh / 2 : bh);
-
+    const col = COLOR[l.cat];
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
     ctx.strokeStyle = col;
     ctx.lineWidth = 1.5;
-    roundRect(ctx, bx, by, bw, bh, 4);
+    roundRect(ctx, l.x, l.y, l.w, l.h, 4);
     ctx.fill(); ctx.stroke();
-
     ctx.fillStyle = '#222222';
+    ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(label, bx + bw / 2, by + bh - 5);
+    ctx.fillText(String(l.num), lcx, l.y + l.h - 5);
     ctx.restore();
   });
 
