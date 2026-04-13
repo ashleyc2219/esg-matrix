@@ -71,6 +71,16 @@ function drawMatrix(data) {
   const [cx0] = dataToCanvas(-0.5, 0);
   ctx.fillText('低', cx0, CFG.PAD_T + plotH + 38);
 
+  // X-axis numeric labels (every 0.5 step)
+  ctx.font = '400 16px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#888888';
+  ctx.textAlign = 'center';
+  for (let v = CFG.X_MIN; v <= CFG.X_MAX + 0.01; v += 0.5) {
+    const val = Math.round(v * 10) / 10;
+    const [cx] = dataToCanvas(val, 0);
+    ctx.fillText(val.toFixed(1), cx, CFG.PAD_T + plotH + 60);
+  }
+
   // Y-axis labels
   ctx.textAlign = 'left';
   ctx.font = '400 22px "Noto Sans TC", sans-serif';
@@ -78,6 +88,14 @@ function drawMatrix(data) {
   [[3.0, '大'], [2.5, '中'], [2.0, '小']].forEach(([v, lbl]) => {
     const [, cy] = dataToCanvas(0, v);
     ctx.fillText(lbl, CFG.PAD_L + 6, cy + 8);
+  });
+
+  // Y-axis numeric labels (below 大/中/小)
+  ctx.font = '400 16px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = '#BBBBBB';
+  [[3.0, '3.0'], [2.5, '2.5'], [2.0, '2.0']].forEach(([v, num]) => {
+    const [, cy] = dataToCanvas(0, v);
+    ctx.fillText(num, CFG.PAD_L + 6, cy + 26);
   });
 
   // Axis titles

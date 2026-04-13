@@ -6,7 +6,7 @@ function setStep(active) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('step' + i);
     el.classList.remove('active', 'done');
-    if (i < active)      el.classList.add('done');
+    if (i < active) el.classList.add('done');
     else if (i === active) el.classList.add('active');
   }
 }
@@ -16,23 +16,23 @@ function resolveAxisLimits(data) {
   Object.assign(CFG, CFG_FIXED); // reset to fixed limits first
 
   const inBounds = data.every(d =>
-    d.prob   >= CFG.X_MIN && d.prob   <= CFG.X_MAX &&
+    d.prob >= CFG.X_MIN && d.prob <= CFG.X_MAX &&
     d.impact >= CFG.Y_MIN && d.impact <= CFG.Y_MAX
   );
   if (inBounds) return;
 
   // Option B: derive limits from data with padding, snapped to 0.5 grid
-  const probs   = data.map(d => d.prob);
+  const probs = data.map(d => d.prob);
   const impacts = data.map(d => d.impact);
-  const xMin = Math.min(...probs),   xMax = Math.max(...probs);
+  const xMin = Math.min(...probs), xMax = Math.max(...probs);
   const yMin = Math.min(...impacts), yMax = Math.max(...impacts);
   const xPad = Math.max((xMax - xMin) * 0.15, 0.3);
   const yPad = Math.max((yMax - yMin) * 0.15, 0.3);
 
   CFG.X_MIN = Math.floor((xMin - xPad) * 2) / 2;
-  CFG.X_MAX = Math.ceil( (xMax + xPad) * 2) / 2;
+  CFG.X_MAX = Math.ceil((xMax + xPad) * 2) / 2;
   CFG.Y_MIN = Math.floor((yMin - yPad) * 2) / 2;
-  CFG.Y_MAX = Math.ceil( (yMax + yPad) * 2) / 2;
+  CFG.Y_MAX = Math.ceil((yMax + yPad) * 2) / 2;
 }
 
 // ── Generate chart ────────────────────────────────────────────────────────────
