@@ -1,114 +1,133 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>重大性矩陣圖產生器</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/main.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>重大性矩陣圖產生器 matrix generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
 
-<header>
-  <div>
-    <h1>重大性矩陣圖產生器</h1>
-    <span>Materiality Matrix Generator</span>
-  </div>
-</header>
+  <header>
+    <div>
+      <h1>重大性矩陣圖產生器 V2</h1>
+      <span>Materiality Matrix Generator</span>
+    </div>
+  </header>
 
-<main>
+  <main>
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="step1">
-      <div class="step-num">1</div>
-      <div class="step-label">下載範本</div>
-    </div>
-    <div class="step" id="step2">
-      <div class="step-num">2</div>
-      <div class="step-label">上傳資料</div>
-    </div>
-    <div class="step" id="step3">
-      <div class="step-num">3</div>
-      <div class="step-label">產生圖表</div>
-    </div>
-    <div class="step" id="step4">
-      <div class="step-num">4</div>
-      <div class="step-label">下載 PNG</div>
-    </div>
-  </div>
-
-  <!-- Step 1: Download template -->
-  <div class="card">
-    <div class="card-title">步驟一：下載 Excel 範本</div>
-    <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px;">
-      請先下載範本檔案，依格式填入議題資料後再上傳。
-    </p>
-    <button class="btn btn-outline" onclick="downloadTemplate()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      下載 Excel 範本
-    </button>
-    <div class="format-hint">
-      <strong>欄位說明（固定 30 筆，請勿增減列數）</strong>
-      <div class="col-tags">
-        <span class="col-tag">A 欄：議題名稱</span>
-        <span class="col-tag">B 欄：面向（G / E / S）</span>
-        <span class="col-tag">C 欄：衝擊程度（數字）</span>
-        <span class="col-tag">D 欄：發生機率（正面為正數，負面為負數）</span>
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step active" id="step1">
+        <div class="step-num">1</div>
+        <div class="step-label">下載範本</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-num">2</div>
+        <div class="step-label">上傳資料</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-num">3</div>
+        <div class="step-label">產生圖表</div>
+      </div>
+      <div class="step" id="step4">
+        <div class="step-num">4</div>
+        <div class="step-label">下載 PNG</div>
       </div>
     </div>
-  </div>
 
-  <!-- Step 2: Upload -->
-  <div class="card">
-    <div class="card-title">步驟二：上傳填寫好的 Excel</div>
-    <div class="upload-zone" id="uploadZone">
-      <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this)">
-      <div class="upload-icon">📊</div>
-      <p><strong>點擊選擇檔案</strong>或拖曳至此</p>
-      <p style="margin-top:4px;">支援 .xlsx / .xls</p>
-      <div class="file-name" id="fileName"></div>
-    </div>
-    <div class="error-box" id="errorBox"></div>
-    <div class="action-row">
-      <button class="btn btn-primary" id="generateBtn" onclick="generateChart()" disabled>
-        <div class="spinner" id="spinner"></div>
-        <span id="generateLabel">產生矩陣圖</span>
+    <!-- Step 1: Download template -->
+    <div class="card">
+      <div class="card-title">步驟一：下載 Excel 範本</div>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px;">
+        請先下載範本檔案，依格式填入議題資料後再上傳。
+      </p>
+      <button class="btn btn-outline" onclick="downloadTemplate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        下載 Excel 範本
       </button>
-    </div>
-  </div>
-
-  <!-- Step 3+4: Result -->
-  <div class="card" id="result-section">
-    <div class="card-title">步驟三：預覽與下載</div>
-    <div class="canvas-wrap">
-      <canvas id="matrixCanvas"></canvas>
-    </div>
-    <div class="result-actions">
-      <div>
-        <div class="legend-pills">
-          <div class="legend-pill"><div class="pill-dot" style="background:var(--G)"></div>G 治理／經濟</div>
-          <div class="legend-pill"><div class="pill-dot" style="background:var(--E)"></div>E 環境</div>
-          <div class="legend-pill"><div class="pill-dot" style="background:var(--S)"></div>S 社會</div>
+      <div class="format-hint">
+        <strong>欄位說明（固定 30 筆，請勿增減列數）</strong>
+        <div class="col-tags">
+          <span class="col-tag">A 欄：議題名稱</span>
+          <span class="col-tag">B 欄：面向（G / E / S）</span>
+          <span class="col-tag">C 欄：衝擊程度（數字）</span>
+          <span class="col-tag">D 欄：發生機率（正面為正數，負面為負數）</span>
         </div>
-        <div class="result-meta" id="resultMeta" style="margin-top:8px;"></div>
       </div>
-      <button class="btn btn-download" onclick="downloadPNG()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        下載 PNG
-      </button>
     </div>
-  </div>
 
-</main>
+    <!-- Step 2: Upload -->
+    <div class="card">
+      <div class="card-title">步驟二：上傳填寫好的 Excel</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this)">
+        <div class="upload-icon">📊</div>
+        <p><strong>點擊選擇檔案</strong>或拖曳至此</p>
+        <p style="margin-top:4px;">支援 .xlsx / .xls</p>
+        <div class="file-name" id="fileName"></div>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+      <div class="action-row">
+        <button class="btn btn-primary" id="generateBtn" onclick="generateChart()" disabled>
+          <div class="spinner" id="spinner"></div>
+          <span id="generateLabel">產生矩陣圖</span>
+        </button>
+      </div>
+    </div>
 
-<footer>重大性矩陣圖產生器 &nbsp;·&nbsp; 僅供內部使用</footer>
+    <!-- Step 3+4: Result -->
+    <div class="card" id="result-section">
+      <div class="card-title">步驟三：預覽與下載</div>
+      <div class="canvas-wrap">
+        <canvas id="matrixCanvas"></canvas>
+      </div>
+      <div class="result-actions">
+        <div>
+          <div class="legend-pills">
+            <div class="legend-pill">
+              <div class="pill-dot" style="background:var(--G)"></div>G 治理／經濟
+            </div>
+            <div class="legend-pill">
+              <div class="pill-dot" style="background:var(--E)"></div>E 環境
+            </div>
+            <div class="legend-pill">
+              <div class="pill-dot" style="background:var(--S)"></div>S 社會
+            </div>
+          </div>
+          <div class="result-meta" id="resultMeta" style="margin-top:8px;"></div>
+        </div>
+        <button class="btn btn-download" onclick="downloadPNG()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          下載 PNG
+        </button>
+      </div>
+    </div>
 
-<script src="js/config.js"></script>
-<script src="js/template.js"></script>
-<script src="js/fileProcessor.js"></script>
-<script src="js/chart.js"></script>
-<script src="js/app.js"></script>
+  </main>
+
+  <footer>重大性矩陣圖產生器 &nbsp;·&nbsp; 僅供內部使用</footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/template.js"></script>
+  <script src="js/fileProcessor.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>
