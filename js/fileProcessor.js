@@ -46,8 +46,8 @@ function processFile(file) {
         if (isNaN(impact) || isNaN(prob)) throw new Error(`第 ${i+1} 列數值格式錯誤`);
         data.push({ num: data.length + 1, name: String(r[iIssue]).trim(), cat, impact, prob });
       }
-      if (data.length !== 30)
-        throw new Error(`資料筆數應為 30 筆，目前為 ${data.length} 筆`);
+      if (data.length < 1)
+        throw new Error('檔案中未包含任何有效資料');
 
       parsedData = data;
       zone.classList.add('has-file');

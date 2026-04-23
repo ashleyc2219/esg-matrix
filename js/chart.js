@@ -253,7 +253,8 @@ function drawMatrix(data) {
   const panelX = CFG.W - CFG.PAD_R + 16;
   const panelW = CFG.PAD_R - 24;
   const panelY = CFG.PAD_T;
-  const ROW_H  = plotH / 17;
+  const half   = Math.ceil(data.length / 2);
+  const ROW_H  = plotH / (half + 1);
   const FONT_SIZE = Math.min(15, ROW_H * 0.48);
   const colW   = panelW / 2;
 
@@ -281,13 +282,7 @@ function drawMatrix(data) {
 
       ctx.fillStyle = '#333333';
       ctx.font = `${FONT_SIZE}px "Noto Sans TC", sans-serif`;
-      const maxW = colW - 44;
-      let name = d.name;
-      while (ctx.measureText(name).width > maxW && name.length > 2) {
-        name = name.slice(0, -1);
-      }
-      if (name !== d.name) name = name.slice(0, -1) + '…';
-      ctx.fillText(name, baseX + 40, ry + ROW_H * 0.68);
+      ctx.fillText(d.name, baseX + 40, ry + ROW_H * 0.68);
     });
   }
 
@@ -301,11 +296,11 @@ function drawMatrix(data) {
   ctx.fillText('編號　議題', panelX + colW / 2, panelY + ROW_H * 0.68);
   ctx.fillText('編號　議題', panelX + colW + colW / 2, panelY + ROW_H * 0.68);
 
-  drawRefRows(data.slice(0, 15),  panelX);
-  drawRefRows(data.slice(15, 30), panelX + colW);
+  drawRefRows(data.slice(0, half),  panelX);
+  drawRefRows(data.slice(half),     panelX + colW);
 
   // Legend at bottom of panel
-  const legendY = panelY + ROW_H * 17 + 10;
+  const legendY = panelY + ROW_H * (half + 1) + 10;
   const legendItems = [['G', '治理/經濟'], ['E', '環境'], ['S', '社會']];
   ctx.font = `500 18px "Noto Sans TC", sans-serif`;
   ctx.textAlign = 'left';
