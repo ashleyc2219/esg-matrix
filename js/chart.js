@@ -10,7 +10,7 @@ function dataToCanvas(x, y) {
 // ── Matrix drawing ────────────────────────────────────────────────────────────
 function drawMatrix(data) {
   const canvas = document.getElementById('matrixCanvas');
-  canvas.width  = CFG.W;
+  canvas.width = CFG.W;
   canvas.height = CFG.H;
   const ctx = canvas.getContext('2d');
 
@@ -151,8 +151,8 @@ function drawMatrix(data) {
   // Labels sharing the same anchor are fanned out so repulsion has a non-zero
   // direction to work with from the very first iteration.
   const INIT_DIRS = [
-    [ 10, -10], [-10, -10], [ 10,  10], [-10,  10],
-    [  0, -14], [ 14,   0], [  0,  14], [-14,   0],
+    [10, -10], [-10, -10], [10, 10], [-10, 10],
+    [0, -14], [14, 0], [0, 14], [-14, 0],
   ];
   const anchorCount = {};
   ctx.font = 'bold 17px "Noto Sans TC", sans-serif';
@@ -167,10 +167,10 @@ function drawMatrix(data) {
   });
 
   // ── Phase 3: force-directed label placement ───────────────────────────────
-  const ITERS       = 300;
-  const SPRING_K    = 0.03;
+  const ITERS = 300;
+  const SPRING_K = 0.03;
   const SPRING_REST = 18;
-  const DOT_RADIUS  = 14;
+  const DOT_RADIUS = 14;
 
   for (let iter = 0; iter < ITERS; iter++) {
     // Label–label repulsion
@@ -253,10 +253,10 @@ function drawMatrix(data) {
   const panelX = CFG.W - CFG.PAD_R + 16;
   const panelW = CFG.PAD_R - 24;
   const panelY = CFG.PAD_T;
-  const half   = Math.ceil(data.length / 2);
-  const ROW_H  = plotH / (half + 1);
+  const half = Math.ceil(data.length / 2);
+  const ROW_H = plotH / (half + 1);
   const FONT_SIZE = Math.min(15, ROW_H * 0.48);
-  const colW   = panelW / 2;
+  const colW = panelW / 2;
 
   // Panel title
   ctx.fillStyle = '#222222';
@@ -276,9 +276,20 @@ function drawMatrix(data) {
       ctx.fillText(String(d.num).padStart(2, '0'), baseX + 4, ry + ROW_H * 0.68);
 
       ctx.fillStyle = COLOR[d.cat];
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1;
+      const ix = baseX + 32, iy = ry + ROW_H * 0.5;
       ctx.beginPath();
-      ctx.arc(baseX + 32, ry + ROW_H * 0.5, 4, 0, Math.PI * 2);
-      ctx.fill();
+      if (d.cat === 'G') {
+        ctx.arc(ix, iy, 5, 0, Math.PI * 2);
+      } else if (d.cat === 'E') {
+        ctx.moveTo(ix, iy - 6); ctx.lineTo(ix + 6, iy); ctx.lineTo(ix, iy + 6); ctx.lineTo(ix - 6, iy);
+        ctx.closePath();
+      } else {
+        ctx.moveTo(ix, iy - 6); ctx.lineTo(ix + 6, iy + 5); ctx.lineTo(ix - 6, iy + 5);
+        ctx.closePath();
+      }
+      ctx.fill(); ctx.stroke();
 
       ctx.fillStyle = '#333333';
       ctx.font = `${FONT_SIZE}px "Noto Sans TC", sans-serif`;
@@ -296,12 +307,12 @@ function drawMatrix(data) {
   ctx.fillText('編號　議題', panelX + colW / 2, panelY + ROW_H * 0.68);
   ctx.fillText('編號　議題', panelX + colW + colW / 2, panelY + ROW_H * 0.68);
 
-  drawRefRows(data.slice(0, half),  panelX);
-  drawRefRows(data.slice(half),     panelX + colW);
+  drawRefRows(data.slice(0, half), panelX);
+  drawRefRows(data.slice(half), panelX + colW);
 
   // Legend at bottom of panel
   const legendY = panelY + ROW_H * (half + 1) + 10;
-  const legendItems = [['G', '治理/經濟'], ['E', '環境'], ['S', '社會']];
+  const legendItems = [['G', 'G 治理/經濟'], ['E', 'E 環境'], ['S', 'S 社會']];
   ctx.font = `500 18px "Noto Sans TC", sans-serif`;
   ctx.textAlign = 'left';
   let lx2 = panelX;
