@@ -16,11 +16,17 @@ function handleFile(input) {
 function processFile(file) {
   showError('');
   const reader = new FileReader();
+  const isCsv = file.name.toLowerCase().endsWith('.csv');
   reader.onload = e => {
     try {
-      const wb = XLSX.read(e.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      let rows;
+      if (isCsv) {
+        rows = e.target.result.trim().split('\n').map(r => r.split(','));
+      } else {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      }
 
       // Validate
       if (rows.length < 2) throw new Error('檔案內容為空');
@@ -62,7 +68,8 @@ function processFile(file) {
       document.getElementById('generateBtn').disabled = true;
     }
   };
-  reader.readAsArrayBuffer(file);
+  if (isCsv) reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
 }
 
 function showError(msg) {
